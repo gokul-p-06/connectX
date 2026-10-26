@@ -1,0 +1,30 @@
+# Maven
+
+target/
+!.mvn/wrapper/maven-wrapper.jar
+
+# IntelliJ IDEA
+
+.idea/
+*.iml
+out/
+
+# Visual Studio Code
+
+.vscode/
+
+# Environment variables and local secrets
+
+.env
+.env.*
+!.env.example
+
+# Logs
+
+*.log
+
+# Operating system files
+
+.DS_Store
+Thumbs.db
+Desktop.ini
