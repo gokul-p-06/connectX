@@ -55,6 +55,28 @@
         <artifactId>spring-boot-starter-test</artifactId>
         <scope>test</scope>
     </dependency>
+	    <!-- JWT API: used by our Java code -->
+    <dependency>
+        <groupId>io.jsonwebtoken</groupId>
+        <artifactId>jjwt-api</artifactId>
+        <version>0.13.0</version>
+    </dependency>
+
+    <!-- JWT implementation: needed at runtime -->
+    <dependency>
+        <groupId>io.jsonwebtoken</groupId>
+        <artifactId>jjwt-impl</artifactId>
+        <version>0.13.0</version>
+        <scope>runtime</scope>
+    </dependency>
+
+    <!-- Jackson integration: handles JWT JSON processing -->
+    <dependency>
+        <groupId>io.jsonwebtoken</groupId>
+        <artifactId>jjwt-jackson</artifactId>
+        <version>0.13.0</version>
+        <scope>runtime</scope>
+    </dependency>
 <dependency>
     <groupId>com.h2database</groupId>
     <artifactId>h2</artifactId>

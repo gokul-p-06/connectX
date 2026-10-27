@@ -4,6 +4,7 @@ import com.connectx.dto.LoginRequest;
 import com.connectx.dto.RegisterRequest;
 import com.connectx.entity.User;
 import com.connectx.service.AuthService;
+import com.connectx.service.JwtService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -19,9 +20,13 @@ import java.util.Map;
 public class AuthController {
 
     private final AuthService authService;
+    private final JwtService jwtService;
 
-    public AuthController(AuthService authService) {
+    public AuthController(
+            AuthService authService,
+            JwtService jwtService) {
         this.authService = authService;
+        this.jwtService = jwtService;
     }
 
     @PostMapping("/register")
@@ -48,11 +53,14 @@ public class AuthController {
 
         User user = authService.login(request);
 
+        String token = jwtService.generateToken(user.getId());
+
         Map<String, Object> response = Map.of(
                 "message", "Login successful",
                 "id", user.getId(),
                 "username", user.getUsername(),
-                "email", user.getEmail()
+                "email", user.getEmail(),
+                "token", token
         );
 
         return ResponseEntity.ok(response);
