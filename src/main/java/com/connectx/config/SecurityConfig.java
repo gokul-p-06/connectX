@@ -17,6 +17,7 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf
                         .ignoringRequestMatchers(
                                 "/api/auth/register",
+                                "/api/auth/login",
                                 "/h2-console/**"
                         )
                 )
@@ -24,6 +25,7 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/api/health",
                                 "/api/auth/register",
+                                "/api/auth/login",
                                 "/h2-console",
                                 "/h2-console/**"
                         ).permitAll()

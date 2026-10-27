@@ -1,5 +1,6 @@
 package com.connectx.controller;
 
+import com.connectx.dto.LoginRequest;
 import com.connectx.dto.RegisterRequest;
 import com.connectx.entity.User;
 import com.connectx.service.AuthService;
@@ -39,5 +40,21 @@ public class AuthController {
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(response);
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<Map<String, Object>> login(
+            @Valid @RequestBody LoginRequest request) {
+
+        User user = authService.login(request);
+
+        Map<String, Object> response = Map.of(
+                "message", "Login successful",
+                "id", user.getId(),
+                "username", user.getUsername(),
+                "email", user.getEmail()
+        );
+
+        return ResponseEntity.ok(response);
     }
 }
