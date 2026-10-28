@@ -10,6 +10,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
+import com.connectx.repository.MessageRepository;
+
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -26,6 +28,10 @@ class MessageAuthorizationTest {
 
     @Autowired
     private JwtService jwtService;
+
+    @Autowired
+private MessageRepository messageRepository;
+
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -375,5 +381,176 @@ class MessageAuthorizationTest {
         assertFalse(
                 containsContent(bobReceivedMessages, "Bob to Alice"),
                 "Bob's received list must not contain his outgoing message");
+                
     }
+    
+@Test
+void sendingMessageToNonexistentReceiverShouldReturn404()
+throws Exception {
+
+TestUser alice = registerAndLogin(
+        "alice",
+        "alice.nonexistent@example.com",
+        "AlicePassword123");
+
+long nonexistentReceiverId = 99999L;
+
+long messageCountBefore = messageRepository.count();
+
+mockMvc.perform(
+                post("/api/messages")
+                        .header(
+                                "Authorization",
+                                "Bearer " + alice.token())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                    "receiverId": %d,
+                                    "content": "Hello nonexistent user"
+                                }
+                                """.formatted(nonexistentReceiverId)))
+        .andExpect(status().isNotFound());
+
+long messageCountAfter = messageRepository.count();
+
+org.junit.jupiter.api.Assertions.assertEquals(
+        messageCountBefore,
+        messageCountAfter,
+        "No message should be saved when the receiver does not exist");
+
+
+}
+
+@Test
+void userWithNoMessagesShouldReceiveEmptySentAndReceivedLists()
+        throws Exception {
+
+    TestUser alice = registerAndLogin(
+            "alice",
+            "alice.empty-lists@example.com",
+            "AlicePassword123");
+
+    JsonNode sentMessages = getMessages(
+            alice.token(),
+            "/api/messages/sent");
+
+    JsonNode receivedMessages = getMessages(
+            alice.token(),
+            "/api/messages/received");
+
+    assertTrue(
+            sentMessages.isArray(),
+            "Sent messages response should be a JSON array");
+
+    assertTrue(
+            sentMessages.isEmpty(),
+            "Sent messages list should be empty");
+
+    assertTrue(
+            receivedMessages.isArray(),
+            "Received messages response should be a JSON array");
+
+    assertTrue(
+            receivedMessages.isEmpty(),
+            "Received messages list should be empty");
+}
+@Test
+void sendingMessageWithSurroundingSpacesShouldTrimContent()
+        throws Exception {
+
+    TestUser alice = registerAndLogin(
+            "alice",
+            "alice.trim@example.com",
+            "AlicePassword123");
+
+    TestUser bob = registerAndLogin(
+            "bob",
+            "bob.trim@example.com",
+            "BobPassword123");
+
+    sendMessage(
+            alice.token(),
+            bob.id(),
+            "   Hello Bob   ");
+
+    JsonNode sentMessages = getMessages(
+            alice.token(),
+            "/api/messages/sent");
+
+    assertTrue(
+            containsContent(sentMessages, "Hello Bob"),
+            "Message content should have leading and trailing spaces removed");
+
+    assertFalse(
+            containsContent(sentMessages, "   Hello Bob   "),
+            "Message content should not retain surrounding spaces");
+}
+@Test
+void sendingMessageWithoutReceiverIdShouldReturn400()
+        throws Exception {
+
+    TestUser alice = registerAndLogin(
+            "alice",
+            "alice.missing-receiver@example.com",
+            "AlicePassword123");
+
+    long messageCountBefore = messageRepository.count();
+
+    mockMvc.perform(
+                    post("/api/messages")
+                            .header(
+                                    "Authorization",
+                                    "Bearer " + alice.token())
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("""
+                                    {
+                                        "content": "Hello Bob"
+                                    }
+                                    """))
+            .andExpect(status().isBadRequest());
+
+    long messageCountAfter = messageRepository.count();
+
+    org.junit.jupiter.api.Assertions.assertEquals(
+            messageCountBefore,
+            messageCountAfter,
+            "No message should be saved when receiver ID is missing");
+}
+@Test
+void sendingMessageWithoutContentShouldReturn400()
+        throws Exception {
+
+    TestUser alice = registerAndLogin(
+            "alice",
+            "alice.missing-content@example.com",
+            "AlicePassword123");
+
+    TestUser bob = registerAndLogin(
+            "bob",
+            "bob.missing-content@example.com",
+            "BobPassword123");
+
+    long messageCountBefore = messageRepository.count();
+
+    mockMvc.perform(
+                    post("/api/messages")
+                            .header(
+                                    "Authorization",
+                                    "Bearer " + alice.token())
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("""
+                                    {
+                                        "receiverId": %d
+                                    }
+                                    """.formatted(bob.id())))
+            .andExpect(status().isBadRequest());
+
+    long messageCountAfter = messageRepository.count();
+
+    org.junit.jupiter.api.Assertions.assertEquals(
+            messageCountBefore,
+            messageCountAfter,
+            "No message should be saved when content is missing");
+}
+
 }
