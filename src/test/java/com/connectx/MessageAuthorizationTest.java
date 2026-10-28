@@ -17,6 +17,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
@@ -217,7 +218,9 @@ private MessageRepository messageRepository;
                                     "content": "   "
                                 }
                                 """))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error")
+                        .value("Message content cannot be empty"));
     }
 
     @Test
@@ -409,7 +412,8 @@ mockMvc.perform(
                                     "content": "Hello nonexistent user"
                                 }
                                 """.formatted(nonexistentReceiverId)))
-        .andExpect(status().isNotFound());
+        .andExpect(status().isNotFound())
+        .andExpect(jsonPath("$.error").value("Receiver not found"));
 
 long messageCountAfter = messageRepository.count();
 
