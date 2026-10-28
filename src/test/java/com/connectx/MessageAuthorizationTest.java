@@ -556,5 +556,26 @@ void sendingMessageWithoutContentShouldReturn400()
             messageCountAfter,
             "No message should be saved when content is missing");
 }
+@Test
+void loginWithInvalidPasswordShouldReturn401() throws Exception {
+
+    registerAndLogin(
+            "alice",
+            "alice.invalid-login@example.com",
+            "AlicePassword123");
+
+    mockMvc.perform(
+                    post("/api/auth/login")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("""
+                                    {
+                                        "email": "alice.invalid-login@example.com",
+                                        "password": "WrongPassword123"
+                                    }
+                                    """))
+            .andExpect(status().isUnauthorized())
+            .andExpect(jsonPath("$.error")
+                    .value("Invalid email or password"));
+}
 
 }
