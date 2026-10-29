@@ -578,4 +578,29 @@ void loginWithInvalidPasswordShouldReturn401() throws Exception {
                     .value("Invalid email or password"));
 }
 
+@Test
+void registeringWithDuplicateEmailShouldReturn409() throws Exception {
+
+    String registrationRequest = """
+            {
+                "username": "alice",
+                "email": "alice.duplicate@example.com",
+                "password": "AlicePassword123"
+            }
+            """;
+
+    mockMvc.perform(
+                    post("/api/auth/register")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(registrationRequest))
+            .andExpect(status().isCreated());
+
+    mockMvc.perform(
+                    post("/api/auth/register")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(registrationRequest))
+            .andExpect(status().isConflict())
+            .andExpect(jsonPath("$.error")
+                    .value("Email is already registered"));
+}
 }
