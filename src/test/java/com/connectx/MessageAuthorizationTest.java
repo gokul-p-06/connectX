@@ -603,4 +603,77 @@ void registeringWithDuplicateEmailShouldReturn409() throws Exception {
             .andExpect(jsonPath("$.error")
                     .value("Email is already registered"));
 }
+@Test
+void registeringWithInvalidEmailShouldReturn400() throws Exception {
+
+    String registrationRequest = """
+            {
+                "username": "alice",
+                "email": "invalid-email",
+                "password": "AlicePassword123"
+            }
+            """;
+
+    mockMvc.perform(
+                    post("/api/auth/register")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(registrationRequest))
+            .andExpect(status().isBadRequest());
+}
+@Test
+void registeringWithMissingUsernameShouldReturn400() throws Exception {
+
+    String registrationRequest = """
+            {
+                "email": "missing.username@example.com",
+                "password": "AlicePassword123"
+            }
+            """;
+
+    mockMvc.perform(
+                    post("/api/auth/register")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(registrationRequest))
+            .andExpect(status().isBadRequest());
+}
+@Test
+void registeringWithShortPasswordShouldReturn400() throws Exception {
+
+    String registrationRequest = """
+            {
+                "username": "alice",
+                "email": "short.password@example.com",
+                "password": "short"
+            }
+            """;
+
+    mockMvc.perform(
+                    post("/api/auth/register")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(registrationRequest))
+            .andExpect(status().isBadRequest());
+}
+
+@Test
+void registeringWithValidDetailsShouldReturn201() throws Exception {
+
+    String registrationRequest = """
+            {
+                "username": "validuser",
+                "email": "valid.registration@example.com",
+                "password": "ValidPassword123"
+            }
+            """;
+
+    mockMvc.perform(
+                    post("/api/auth/register")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(registrationRequest))
+            .andExpect(status().isCreated())
+            .andExpect(jsonPath("$.username").value("validuser"))
+            .andExpect(jsonPath("$.email")
+                    .value("valid.registration@example.com"));
+}
+
+
 }
