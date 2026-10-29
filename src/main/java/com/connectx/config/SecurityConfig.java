@@ -38,15 +38,20 @@ public SecurityFilterChain securityFilterChain(
                     )
             )
             .authorizeHttpRequests(auth -> auth
-        .requestMatchers(
-                "/api/health",
-                "/api/auth/register",
-                "/api/auth/login",
-                "/h2-console",
-                "/h2-console/**",
-                "/error"
-        ).permitAll()
-        .anyRequest().authenticated()
+
+.requestMatchers(
+        "/api/health",
+        "/api/auth/register",
+        "/api/auth/login",
+        "/h2-console",
+        "/h2-console/**",
+        "/ws",
+        "/ws/**",
+        "/error"
+).permitAll()
+.anyRequest().authenticated()
+
+
 )
             .headers(headers -> headers
                     .frameOptions(frame -> frame.sameOrigin())
