@@ -11,6 +11,7 @@ public class MessageResponse {
     private Long receiverId;
     private String content;
     private LocalDateTime createdAt;
+    private boolean read;
 
     public MessageResponse() {
     }
@@ -20,13 +21,15 @@ public class MessageResponse {
             Long senderId,
             Long receiverId,
             String content,
-            LocalDateTime createdAt) {
+            LocalDateTime createdAt,
+            boolean read) {
 
         this.id = id;
         this.senderId = senderId;
         this.receiverId = receiverId;
         this.content = content;
         this.createdAt = createdAt;
+        this.read = read;
     }
 
     public static MessageResponse from(Message message) {
@@ -35,7 +38,8 @@ public class MessageResponse {
                 message.getSender().getId(),
                 message.getReceiver().getId(),
                 message.getContent(),
-                message.getCreatedAt()
+                message.getCreatedAt(),
+                message.isRead()
         );
     }
 
@@ -57,5 +61,9 @@ public class MessageResponse {
 
     public LocalDateTime getCreatedAt() {
         return createdAt;
+    }
+
+    public boolean isRead() {
+        return read;
     }
 }

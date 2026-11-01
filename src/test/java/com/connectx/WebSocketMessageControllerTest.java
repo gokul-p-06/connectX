@@ -43,8 +43,8 @@ void sendMessageShouldSaveAndDeliverToReceiver() {
 
     Principal principal = () -> "1";
 
-    MessageResponse savedMessage = new MessageResponse(
-            10L, 1L, 2L, "Hello Bob", LocalDateTime.now());
+   MessageResponse savedMessage = new MessageResponse(
+        10L, 1L, 2L, "Hello Bob", LocalDateTime.now(), false);
 
     when(messageService.sendMessage(1L, request))
             .thenReturn(savedMessage);

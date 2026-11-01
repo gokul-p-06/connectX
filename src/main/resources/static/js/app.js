@@ -369,29 +369,28 @@ async function openConversation(user) {
     sendButton.disabled = true;
 
     try {
-        // Mark incoming messages as read
-        await authenticatedPut(`/messages/read/${user.id}`);
+    // Load messages while unread status is still available
+    await loadConversation(user.id);
 
-        // Load conversation history
-        await loadConversation(user.id);
+    // Mark incoming messages as read
+    await authenticatedPut(`/messages/read/${user.id}`);
 
-        // Refresh unread counts
-        await loadConversations();
+    // Refresh unread counts
+    await loadConversations();
 
-        conversationSubtitle.textContent =
-            "Conversation with " + user.username;
+    conversationSubtitle.textContent =
+        "Conversation with " + user.username;
 
-    } catch (error) {
-        conversationStatus.textContent = error.message;
-        conversationSubtitle.textContent =
-            "Unable to load conversation.";
+} catch (error) {
+    conversationStatus.textContent = error.message;
+    conversationSubtitle.textContent =
+        "Unable to load conversation.";
 
-    } finally {
-        messageContent.disabled = false;
-        sendButton.disabled = false;
-    }
+} finally {
+    messageContent.disabled = false;
+    sendButton.disabled = false;
 }
-
+}
 async function authenticatedPost(endpoint, payload) {
     const token = sessionStorage.getItem("connectx_token");
 
@@ -468,12 +467,33 @@ function renderMessages(messages) {
 
     if (messages.length === 0) {
         const emptyMessage = document.createElement("p");
-        emptyMessage.textContent = "No messages yet. Start the conversation!";
+        emptyMessage.textContent =
+            "No messages yet. Start the conversation!";
         messageList.appendChild(emptyMessage);
         return;
     }
 
-    messages.forEach(message => {
+    // Find the first unread message received from the other user
+    const firstUnreadIndex = messages.findIndex(message =>
+        message.senderId === selectedReceiverId &&
+        message.receiverId === currentUser.id &&
+        message.read === false
+    );
+
+    messages.forEach((message, index) => {
+
+        // Insert unread divider before the first unread message
+        if (index === firstUnreadIndex) {
+            const divider = document.createElement("div");
+            divider.className = "unread-divider";
+
+            const dividerText = document.createElement("span");
+            dividerText.textContent = "NEW MESSAGES";
+
+            divider.appendChild(dividerText);
+            messageList.appendChild(divider);
+        }
+
         const messageElement = document.createElement("div");
 
         const isSent = message.senderId === currentUser.id;
@@ -483,13 +503,12 @@ function renderMessages(messages) {
             : "message received";
 
         const sender = document.createElement("strong");
+        sender.textContent = isSent
+            ? "You"
+            : usernameMap.get(message.senderId) || "Unknown user";
 
-sender.textContent = isSent
-    ? "You"
-    : usernameMap.get(message.senderId) || "Unknown user";
-
-const content = document.createElement("p");
-content.textContent = message.content;
+        const content = document.createElement("p");
+        content.textContent = message.content;
 
         const timestamp = document.createElement("small");
         timestamp.textContent = new Date(message.createdAt)
@@ -499,9 +518,31 @@ content.textContent = message.content;
         messageList.appendChild(messageElement);
     });
 
-    messageList.scrollTop = messageList.scrollHeight;
-}
+    // Scroll to the first unread message, or bottom if everything is read
+    requestAnimationFrame(() => {
+        if (firstUnreadIndex !== -1) {
+            const unreadMessage = messageList.children[
+                firstUnreadIndex + 1
+            ];
 
+            unreadMessage?.scrollIntoView({
+                behavior: "smooth",
+                block: "start"
+            });
+        } else {
+            messageList.scrollTo({
+                top: messageList.scrollHeight,
+                behavior: "smooth"
+            });
+        }
+    });
+}
+messageContent.addEventListener("keydown", (event) => {
+    if (event.key === "Enter" && !event.shiftKey) {
+        event.preventDefault();
+        messageForm.requestSubmit();
+    }
+});
 messageForm.addEventListener("submit", (event) => {
 event.preventDefault();
 const content = messageContent.value.trim();
