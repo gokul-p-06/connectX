@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.ResponseStatus;
+import com.connectx.dto.ConversationResponse;
 
 import java.util.List;
 
@@ -51,6 +52,13 @@ public class MessageController {
 
         return messageService.getSentMessages(userId);
     }
+    @GetMapping("/conversations")
+public List<ConversationResponse> getConversations() {
+
+    Long userId = getAuthenticatedUserId();
+
+    return messageService.getConversations(userId);
+}
 
     private Long getAuthenticatedUserId() {
 
@@ -59,4 +67,22 @@ public class MessageController {
 
         return Long.valueOf(authentication.getName());
     }
+    @GetMapping("/unread/{senderId}")
+public long getUnreadCount(
+        @org.springframework.web.bind.annotation.PathVariable Long senderId) {
+
+    Long receiverId = getAuthenticatedUserId();
+
+    return messageService.getUnreadCount(receiverId, senderId);
+}
+
+@org.springframework.web.bind.annotation.PutMapping(
+        "/read/{senderId}")
+public int markMessagesAsRead(
+        @org.springframework.web.bind.annotation.PathVariable Long senderId) {
+
+    Long receiverId = getAuthenticatedUserId();
+
+    return messageService.markMessagesAsRead(receiverId, senderId);
+}
 }

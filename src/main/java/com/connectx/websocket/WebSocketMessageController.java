@@ -42,11 +42,18 @@ public void sendMessage(
     MessageResponse response =
             messageService.sendMessage(senderId, request);
 
+    // Deliver message to receiver
     messagingTemplate.convertAndSendToUser(
             response.getReceiverId().toString(),
             "/queue/messages",
-            response);
+            response
+    );
+
+    // Deliver the same saved message to sender
+    messagingTemplate.convertAndSendToUser(
+            response.getSenderId().toString(),
+            "/queue/messages",
+            response
+    );
 }
-
-
 }

@@ -10,6 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
+import com.connectx.dto.ConversationResponse;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -75,4 +76,54 @@ public class MessageService {
                 .map(MessageResponse::from)
                 .toList();
     }
+    @Transactional(readOnly = true)
+public List<ConversationResponse> getConversations(Long userId) {
+
+    List<Message> messages = messageRepository.findAll().stream()
+            .filter(message ->
+                    message.getSender().getId().equals(userId)
+                    || message.getReceiver().getId().equals(userId))
+            .filter(message ->
+                    !message.getSender().getId()
+                            .equals(message.getReceiver().getId()))
+            .toList();
+
+    return messages.stream()
+            .collect(java.util.stream.Collectors.toMap(
+                    message -> message.getSender().getId().equals(userId)
+                            ? message.getReceiver()
+                            : message.getSender(),
+                    message -> message,
+                    (first, second) ->
+                            first.getCreatedAt().isAfter(second.getCreatedAt())
+                                    ? first : second
+            ))
+            .entrySet()
+            .stream()
+            .map(entry -> new ConversationResponse(
+        entry.getKey().getId(),
+        entry.getKey().getUsername(),
+        entry.getValue().getContent(),
+        entry.getValue().getCreatedAt(),
+        messageRepository.countByReceiverIdAndSenderIdAndReadFalse(
+                userId,
+                entry.getKey().getId()
+        )
+))
+            .sorted((a, b) ->
+                    b.lastMessageAt().compareTo(a.lastMessageAt()))
+            .toList();
+}
+@Transactional(readOnly = true)
+public long getUnreadCount(Long receiverId, Long senderId) {
+    return messageRepository
+            .countByReceiverIdAndSenderIdAndReadFalse(
+                    receiverId, senderId);
+}
+
+@Transactional
+public int markMessagesAsRead(Long receiverId, Long senderId) {
+    return messageRepository.markMessagesAsRead(
+            receiverId, senderId);
+}
 }   

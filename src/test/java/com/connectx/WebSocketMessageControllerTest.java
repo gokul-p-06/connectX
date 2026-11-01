@@ -6,7 +6,6 @@ import com.connectx.service.MessageService;
 import com.connectx.websocket.WebSocketMessageController;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.messaging.MessageDeliveryException;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 
 import java.security.Principal;

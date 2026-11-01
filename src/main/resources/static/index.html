@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#101828">
+    <title>ConnectX | Connect Beyond Boundaries</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <main class="app-container">
+        <section class="brand-panel">
+            <div class="brand">
+                <span class="brand-icon">C</span>
+                <span>ConnectX</span>
+            </div>
+
+            <div class="brand-content">
+                <p class="eyebrow">YOUR WORLD. CONNECTED.</p>
+                <h1>Conversations that bring people closer.</h1>
+                <p class="brand-description">
+                    Connect with people, share ideas, and communicate in real time.
+                </p>
+            </div>
+
+            <p class="brand-footer">Simple. Secure. Connected.</p>
+        </section>
+
+        <section class="auth-panel">
+            <div class="auth-card">
+                <div class="mobile-brand">
+                    <span class="brand-icon">C</span>
+                    <span>ConnectX</span>
+                </div>
+
+                <div class="auth-heading">
+                    <h2 id="form-title">Welcome back</h2>
+                    <p id="form-subtitle">Sign in to continue to ConnectX.</p>
+                </div>
+
+                <div id="status-message" class="status-message"
+                     role="status" aria-live="polite" hidden></div>
+
+                <form id="login-form">
+    <div class="form-group">
+        <label for="login-email">Email address</label>
+        <input id="login-email" name="email" type="email"
+               placeholder="you@example.com"
+               autocomplete="username" required>
+    </div>
+
+    <div class="form-group">
+        <label for="login-password">Password</label>
+        <input id="login-password" name="password" type="password"
+               placeholder="Enter your password"
+               autocomplete="current-password"
+               maxlength="72" required>
+    </div>
+
+    <button type="submit" class="primary-button">
+        Sign in
+    </button>
+</form>
+                </form>
+
+                <form id="register-form" hidden>
+                    <div class="form-group">
+                        <label for="register-username">Username</label>
+                        <input id="register-username" name="username" type="text"
+                               placeholder="Choose a username"
+                               autocomplete="username"
+                               minlength="3" maxlength="30" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="register-email">Email address</label>
+                        <input id="register-email" name="email" type="email"
+                               placeholder="you@example.com"
+                               autocomplete="email" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="register-password">Password</label>
+                        <input id="register-password" name="password" type="password"
+                               placeholder="At least 8 characters"
+                               autocomplete="new-password"
+                               minlength="8" maxlength="72" required>
+                    </div>
+
+                    <button class="primary-button" type="submit" id="register-button">
+                        Create account
+                    </button>
+                </form>
+
+                <p class="auth-switch">
+                    <span id="switch-text">Don't have an account?</span>
+                    <button id="switch-mode" type="button">Create account</button>
+                </p>
+
+                <p class="security-note">
+                    Your account is protected by secure authentication.
+                </p>
+            </div>
+        </section>
+    </main>
+<!-- ConnectX Messaging Dashboard -->
+<section id="dashboard" class="dashboard" hidden>
+    <header class="dashboard-header">
+        <div class="dashboard-brand">
+            <span class="brand-icon">C</span>
+            <span>ConnectX</span>
+        </div>
+
+        <div class="dashboard-user">
+            <span id="current-username">User</span>
+            <button id="logout-button" type="button" class="logout-button">
+                Log out
+            </button>
+        </div>
+    </header>
+
+    <div class="chat-layout">
+        <aside class="chat-sidebar">
+    <h2>Messages</h2>
+
+    <p class="sidebar-description">
+        Find people and start conversations.
+    </p>
+
+    <div class="user-search">
+        <input
+    type="search"
+    id="user-search"
+    placeholder="Search ConnectX users..."
+    autocomplete="off"
+    name="connectx-user-search"
+    aria-label="Search users"
+>
+    </div>
+    <div class="conversations-section">
+    <h3>Recent Conversations</h3>
+
+    <div id="conversation-list" class="conversation-list">
+        <p class="empty-chat">No conversations yet.</p>
+    </div>
+</div>
+
+    <div class="users-section">
+        <h3>People on ConnectX</h3>
+
+        <div id="user-list" class="user-list">
+            <p class="empty-chat">Loading users...</p>
+        </div>
+    </div>
+
+    <div id="conversation-status"
+         class="conversation-status"
+         role="status"
+         aria-live="polite">
+        Select someone to start chatting.
+    </div>
+</aside>
+
+        <section class="chat-panel">
+            <div class="chat-heading">
+                <div>
+                    <h2 id="conversation-title">Your conversation</h2>
+                    <p id="conversation-subtitle">
+                        Select a recipient to view messages.
+                    </p>
+                </div>
+                <span id="connection-status" class="connection-status">
+                    Not connected
+                </span>
+            </div>
+
+            <div id="message-list" class="message-list"
+                 aria-live="polite">
+                <p class="empty-chat">
+                    Your messages will appear here.
+                </p>
+            </div>
+
+            <form id="message-form" class="message-form">
+                <label class="visually-hidden" for="message-content">
+                    Message
+                </label>
+                <textarea
+                    id="message-content"
+                    maxlength="2000"
+                    rows="2"
+                    placeholder="Write a message..."
+                    required
+                    disabled
+                ></textarea>
+
+                <button
+                    id="send-button"
+                    type="submit"
+                    class="primary-button"
+                    disabled
+                >
+                    Send
+                </button>
+            </form>
+        </section>
+    </div>
+</section>
+
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@stomp/stompjs@7/bundles/stomp.umd.min.js"></script>
+<script src="/js/app.js" defer></script>
+</body>
+</html>

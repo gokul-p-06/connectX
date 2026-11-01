@@ -5,28 +5,27 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.junit.jupiter.api.Test;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
-
 import org.springframework.messaging.simp.stomp.StompCommand;
 import org.springframework.messaging.simp.stomp.StompHeaders;
 import org.springframework.messaging.simp.stomp.StompSession;
 import org.springframework.messaging.simp.stomp.StompSessionHandlerAdapter;
-
 import org.springframework.util.MimeTypeUtils;
-
 import org.springframework.web.socket.WebSocketHttpHeaders;
+import org.springframework.web.socket.client.WebSocketClient;
 import org.springframework.web.socket.client.standard.StandardWebSocketClient;
 import org.springframework.web.socket.messaging.WebSocketStompClient;
+import org.springframework.web.socket.sockjs.client.SockJsClient;
+import org.springframework.web.socket.sockjs.client.WebSocketTransport;
 
 import java.lang.reflect.Type;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -81,17 +80,21 @@ class WebSocketIntegrationTest {
         // outgoing and incoming messages use byte arrays.
         // --------------------------------------------------
 
-        WebSocketStompClient stompClient =
-                new WebSocketStompClient(
-                        new StandardWebSocketClient()
-                );
+        WebSocketClient webSocketClient = new SockJsClient(
+        List.of(
+                new WebSocketTransport(new StandardWebSocketClient())
+        )
+);
+
+WebSocketStompClient stompClient =
+        new WebSocketStompClient(webSocketClient);
 
         StompSession receiverSession = null;
         StompSession senderSession = null;
 
         try {
 
-            String url = "ws://localhost:" + port + "/ws";
+           String url = "http://localhost:" + port + "/ws";
 
             // --------------------------------------------------
             // 3. Connect the receiver using its JWT.

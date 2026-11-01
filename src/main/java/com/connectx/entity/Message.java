@@ -1,3 +1,4 @@
+
 package com.connectx.entity;
 
 import jakarta.persistence.Column;
@@ -33,6 +34,9 @@ public class Message {
 
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
+
+   @Column(name = "is_read", nullable = false)
+private boolean read = false;
 
     public Message() {
     }
@@ -72,4 +76,13 @@ public class Message {
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
     }
+
+    public boolean isRead() {
+        return read;
+    }
+
+    public void setRead(boolean read) {
+        this.read = read;
+    }
 }
+

@@ -40,6 +40,11 @@ public SecurityFilterChain securityFilterChain(
             .authorizeHttpRequests(auth -> auth
 
 .requestMatchers(
+        "/",
+        "/index.html",
+        "/css/**",
+        "/js/**",
+        "/favicon.ico",
         "/api/health",
         "/api/auth/register",
         "/api/auth/login",
