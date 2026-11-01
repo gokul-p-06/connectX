@@ -11,6 +11,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 import com.connectx.dto.ConversationResponse;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -125,5 +129,41 @@ public long getUnreadCount(Long receiverId, Long senderId) {
 public int markMessagesAsRead(Long receiverId, Long senderId) {
     return messageRepository.markMessagesAsRead(
             receiverId, senderId);
+}
+@Transactional(readOnly = true)
+public Page<MessageResponse> getConversationMessages(
+        Long userId,
+        Long otherUserId,
+        int page,
+        int size) {
+
+    if (page < 0) {
+        throw new ResponseStatusException(
+                HttpStatus.BAD_REQUEST,
+                "Page number cannot be negative"
+        );
+    }
+
+    if (size < 1 || size > 100) {
+        throw new ResponseStatusException(
+                HttpStatus.BAD_REQUEST,
+                "Page size must be between 1 and 100"
+        );
+    }
+
+    Pageable pageable = PageRequest.of(
+            page,
+            size,
+            Sort.by(
+                    Sort.Order.desc("createdAt"),
+                    Sort.Order.desc("id")
+            )
+    );
+
+    return messageRepository.findConversationPage(
+            userId,
+            otherUserId,
+            pageable
+    ).map(MessageResponse::from);
 }
 }   

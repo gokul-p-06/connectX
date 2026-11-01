@@ -27,56 +27,104 @@ const connectionStatus = document.getElementById("connection-status");
 
 let currentUser = null;
 let selectedReceiverId = null;  
+const MESSAGE_PAGE_SIZE = 30;
+
+let currentMessagePage = 0;
+let hasMoreMessages = false;
+let loadedMessages = [];
+let unreadMessageId = null;
+let isLoadingOlderMessages = false;
 const usernameMap = new Map();
 let allUsers = [];
 let stompClient = null;
 
 function connectWebSocket() {
-    const token = sessionStorage.getItem("connectx_token");
+const token = sessionStorage.getItem("connectx_token");
 
-    if (!token) {
-        return;
-    }
 
-    const socket = new SockJS("/ws");
+if (!token) {
+    return;
+}
 
-    stompClient = StompJs.Stomp.over(socket);
+const socket = new SockJS("/ws");
 
-    stompClient.connect(
-        {
-            Authorization: `Bearer ${token}`
-        },
-        () => {
-            console.log("WebSocket connected successfully.");
-            connectionStatus.textContent = "Connected";
-connectionStatus.classList.add("connected");
+stompClient = StompJs.Stomp.over(socket);
 
-            stompClient.subscribe(
-                "/user/queue/messages",
-                (frame) => {
-                    const message = JSON.parse(frame.body);
-                    loadConversations();
+stompClient.connect(
+    {
+        Authorization: `Bearer ${token}`
+    },
+    () => {
+        console.log("WebSocket connected successfully.");
 
-                    if (
-                        selectedReceiverId &&
-                        (
-                            message.senderId === selectedReceiverId ||
-                            message.receiverId === selectedReceiverId
-                        )
-                    ) {
-                        loadConversation(selectedReceiverId);
-                    }
+        connectionStatus.textContent = "Connected";
+        connectionStatus.classList.add("connected");
+
+        stompClient.subscribe(
+            "/user/queue/messages",
+            (frame) => {
+                const message = JSON.parse(frame.body);
+
+                loadConversations();
+
+                if (!selectedReceiverId) {
+                    return;
                 }
-            );
-        },
-        (error) => {
-    console.error("WebSocket connection failed:", error);
 
-    connectionStatus.textContent = "Disconnected";
-    connectionStatus.classList.remove("connected");
+                const belongsToSelectedConversation =
+                    (message.senderId === selectedReceiverId &&
+                        message.receiverId === currentUser.id) ||
+                    (message.senderId === currentUser.id &&
+                        message.receiverId === selectedReceiverId);
+
+                if (!belongsToSelectedConversation) {
+                    return;
+                }
+
+                // Prevent duplicate messages.
+                const alreadyLoaded = loadedMessages.some(
+                    existing => existing.id === message.id
+                );
+
+                if (alreadyLoaded) {
+                    return;
+                }
+
+                // Check whether the user is near the bottom.
+                const wasNearBottom =
+                    messageList.scrollHeight -
+                    messageList.scrollTop -
+                    messageList.clientHeight < 100;
+
+                loadedMessages.push(message);
+
+                // Maintain chronological order.
+                loadedMessages.sort((a, b) =>
+                    new Date(a.createdAt) - new Date(b.createdAt) ||
+                    a.id - b.id
+                );
+
+                renderMessages(loadedMessages, !wasNearBottom);
+
+                if (wasNearBottom) {
+                    messageList.scrollTo({
+                        top: messageList.scrollHeight,
+                        behavior: "smooth"
+                    });
+                }
+            }
+        );
+    },
+    (error) => {
+        console.error("WebSocket connection failed:", error);
+
+        connectionStatus.textContent = "Disconnected";
+        connectionStatus.classList.remove("connected");
+    }
+);
+
 }
-    );
-}
+
 
 let currentMode = "login";
 
@@ -440,102 +488,191 @@ async function authenticatedPut(endpoint) {
     return data;
 }
 async function loadConversation(receiverId) {
-    const [sentMessages, receivedMessages] = await Promise.all([
-        authenticatedGet("/messages/sent"),
-        authenticatedGet("/messages/received")
-    ]);
+    currentMessagePage = 0;
+    hasMoreMessages = false;
+    loadedMessages = [];
+    unreadMessageId = null;
 
-    const sent = sentMessages.filter(message =>
-        message.senderId === currentUser.id &&
-        message.receiverId === receiverId
+    const response = await authenticatedGet(
+        `/messages/conversation/${receiverId}?page=0&size=${MESSAGE_PAGE_SIZE}`
     );
 
-    const received = receivedMessages.filter(message =>
+    loadedMessages = response.content.reverse();
+
+    hasMoreMessages = !response.last;
+
+    // Preserve the first unread message before marking messages as read.
+    const firstUnread = loadedMessages.find(message =>
         message.senderId === receiverId &&
-        message.receiverId === currentUser.id
-    );
-
-    const conversation = [...sent, ...received]
-        .sort((a, b) =>
-            new Date(a.createdAt) - new Date(b.createdAt)
-        );
-
-    renderMessages(conversation);
-}
-function renderMessages(messages) {
-    messageList.replaceChildren();
-
-    if (messages.length === 0) {
-        const emptyMessage = document.createElement("p");
-        emptyMessage.textContent =
-            "No messages yet. Start the conversation!";
-        messageList.appendChild(emptyMessage);
-        return;
-    }
-
-    // Find the first unread message received from the other user
-    const firstUnreadIndex = messages.findIndex(message =>
-        message.senderId === selectedReceiverId &&
         message.receiverId === currentUser.id &&
         message.read === false
     );
 
-    messages.forEach((message, index) => {
+    unreadMessageId = firstUnread ? firstUnread.id : null;
 
-        // Insert unread divider before the first unread message
-        if (index === firstUnreadIndex) {
-            const divider = document.createElement("div");
-            divider.className = "unread-divider";
+    renderMessages(loadedMessages);
+    updateLoadOlderButton();
+}
+function updateLoadOlderButton() {
+    let button = document.getElementById("load-older-messages");
 
-            const dividerText = document.createElement("span");
-            dividerText.textContent = "NEW MESSAGES";
+    if (!button) {
+        button = document.createElement("button");
+        button.id = "load-older-messages";
+        button.type = "button";
+        button.textContent = "Load Older Messages";
+        button.className = "load-older-button";
 
-            divider.appendChild(dividerText);
-            messageList.appendChild(divider);
-        }
+        button.addEventListener("click", loadOlderMessages);
 
-        const messageElement = document.createElement("div");
+        messageList.prepend(button);
+    }
 
-        const isSent = message.senderId === currentUser.id;
+    button.hidden = !hasMoreMessages;
+    button.disabled = isLoadingOlderMessages;
+}
 
-        messageElement.className = isSent
-            ? "message sent"
-            : "message received";
+async function loadOlderMessages() {
+    if (!selectedReceiverId ||
+        !hasMoreMessages ||
+        isLoadingOlderMessages) {
+        return;
+    }
 
-        const sender = document.createElement("strong");
-        sender.textContent = isSent
-            ? "You"
-            : usernameMap.get(message.senderId) || "Unknown user";
+    isLoadingOlderMessages = true;
+    updateLoadOlderButton();
 
-        const content = document.createElement("p");
-        content.textContent = message.content;
+    const previousHeight = messageList.scrollHeight;
+    const previousTop = messageList.scrollTop;
 
-        const timestamp = document.createElement("small");
-        timestamp.textContent = new Date(message.createdAt)
-            .toLocaleString();
+    try {
+        const nextPage = currentMessagePage + 1;
 
-        messageElement.append(sender, content, timestamp);
-        messageList.appendChild(messageElement);
-    });
+        const response = await authenticatedGet(
+            `/messages/conversation/${selectedReceiverId}?page=${nextPage}&size=${MESSAGE_PAGE_SIZE}`
+        );
 
-    // Scroll to the first unread message, or bottom if everything is read
-    requestAnimationFrame(() => {
-        if (firstUnreadIndex !== -1) {
-            const unreadMessage = messageList.children[
-                firstUnreadIndex + 1
-            ];
+        const olderMessages = response.content.reverse();
 
-            unreadMessage?.scrollIntoView({
-                behavior: "smooth",
-                block: "start"
-            });
-        } else {
-            messageList.scrollTo({
-                top: messageList.scrollHeight,
-                behavior: "smooth"
-            });
-        }
-    });
+        loadedMessages = [
+            ...olderMessages,
+            ...loadedMessages
+        ];
+
+        currentMessagePage = nextPage;
+        hasMoreMessages = !response.last;
+
+       renderMessages(loadedMessages, true);
+
+requestAnimationFrame(() => {
+    const newHeight = messageList.scrollHeight;
+    const heightDifference = newHeight - previousHeight;
+
+    messageList.scrollTop = previousTop + heightDifference;
+});
+
+    } catch (error) {
+        conversationStatus.textContent =
+            "Unable to load older messages.";
+
+        console.error("Older message loading failed:", error);
+
+    } finally {
+        isLoadingOlderMessages = false;
+        updateLoadOlderButton();
+    }
+}
+function renderMessages(messages, preserveScroll = false) {
+const previousHeight = messageList.scrollHeight;
+const previousTop = messageList.scrollTop;
+
+
+messageList.replaceChildren();
+
+// Keep the older-messages button inside the message list.
+if (hasMoreMessages) {
+    const button = document.createElement("button");
+    button.id = "load-older-messages";
+    button.type = "button";
+    button.className = "load-older-button";
+    button.textContent = isLoadingOlderMessages
+        ? "Loading..."
+        : "Load Older Messages";
+    button.disabled = isLoadingOlderMessages;
+    button.addEventListener("click", loadOlderMessages);
+    messageList.appendChild(button);
+}
+
+if (messages.length === 0) {
+    const emptyMessage = document.createElement("p");
+    emptyMessage.textContent =
+        "No messages yet. Start the conversation!";
+    messageList.appendChild(emptyMessage);
+    return;
+}
+
+const firstUnreadIndex = messages.findIndex(
+    message => message.id === unreadMessageId
+);
+
+messages.forEach((message, index) => {
+    if (index === firstUnreadIndex) {
+        const divider = document.createElement("div");
+        divider.className = "unread-divider";
+
+        const dividerText = document.createElement("span");
+        dividerText.textContent = "NEW MESSAGES";
+
+        divider.appendChild(dividerText);
+        messageList.appendChild(divider);
+    }
+
+    const messageElement = document.createElement("div");
+    messageElement.dataset.messageId = message.id;
+
+    const isSent = message.senderId === currentUser.id;
+
+    messageElement.className = isSent
+        ? "message sent"
+        : "message received";
+
+    const sender = document.createElement("strong");
+    sender.textContent = isSent
+        ? "You"
+        : usernameMap.get(message.senderId) || "Unknown user";
+
+    const content = document.createElement("p");
+    content.textContent = message.content;
+
+    const timestamp = document.createElement("small");
+    timestamp.textContent = new Date(message.createdAt)
+        .toLocaleString();
+
+    messageElement.append(sender, content, timestamp);
+    messageList.appendChild(messageElement);
+});
+
+requestAnimationFrame(() => {
+    if (preserveScroll) {
+        messageList.scrollTop =
+            messageList.scrollHeight - previousHeight + previousTop;
+    } else if (firstUnreadIndex !== -1) {
+        const unreadMessage = messageList.querySelector(
+            `[data-message-id="${messages[firstUnreadIndex].id}"]`
+        );
+
+        unreadMessage?.scrollIntoView({
+            behavior: "smooth",
+            block: "start"
+        });
+    } else {
+        messageList.scrollTo({
+            top: messageList.scrollHeight,
+            behavior: "smooth"
+        });
+    }
+});
+
 }
 messageContent.addEventListener("keydown", (event) => {
     if (event.key === "Enter" && !event.shiftKey) {

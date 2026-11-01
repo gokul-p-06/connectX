@@ -14,6 +14,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import com.connectx.dto.ConversationResponse;
+import org.springframework.data.domain.Page;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 
@@ -84,5 +87,20 @@ public int markMessagesAsRead(
     Long receiverId = getAuthenticatedUserId();
 
     return messageService.markMessagesAsRead(receiverId, senderId);
+}
+@GetMapping("/conversation/{otherUserId}")
+public Page<MessageResponse> getConversationMessages(
+        @PathVariable Long otherUserId,
+        @RequestParam(defaultValue = "0") int page,
+        @RequestParam(defaultValue = "30") int size) {
+
+    Long userId = getAuthenticatedUserId();
+
+    return messageService.getConversationMessages(
+            userId,
+            otherUserId,
+            page,
+            size
+    );
 }
 }
