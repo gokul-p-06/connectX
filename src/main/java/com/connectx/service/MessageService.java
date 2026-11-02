@@ -83,7 +83,7 @@ public class MessageService {
     @Transactional(readOnly = true)
 public List<ConversationResponse> getConversations(Long userId) {
 
-    List<Message> messages = messageRepository.findAll().stream()
+    List<Message> messages = messageRepository.findAllByUserId(userId).stream()
             .filter(message ->
                     message.getSender().getId().equals(userId)
                     || message.getReceiver().getId().equals(userId))

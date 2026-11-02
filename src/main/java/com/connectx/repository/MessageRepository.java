@@ -28,14 +28,20 @@ public interface MessageRepository extends JpaRepository<Message, Long> {
     );
     @Query("""
         SELECT m FROM Message m
-        WHERE (m.sender.id = :userId AND m.receiver.id = :otherUserId)
-           OR (m.sender.id = :otherUserId AND m.receiver.id = :userId)
+        WHERE m.sender.id = :userId
+           OR m.receiver.id = :userId
         """)
-Page<Message> findConversationPage(
-        @Param("userId") Long userId,
-        @Param("otherUserId") Long otherUserId,
-        Pageable pageable
-);
+List<Message> findAllByUserId(@Param("userId") Long userId);
+    @Query("""
+            SELECT m FROM Message m
+            WHERE (m.sender.id = :userId AND m.receiver.id = :otherUserId)
+               OR (m.sender.id = :otherUserId AND m.receiver.id = :userId)
+            """)
+    Page<Message> findConversationPage(
+            @Param("userId") Long userId,
+            @Param("otherUserId") Long otherUserId,
+            Pageable pageable
+    );
 
     // Count unread messages from a specific sender
     long countByReceiverIdAndSenderIdAndReadFalse(
