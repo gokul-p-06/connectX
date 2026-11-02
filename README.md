@@ -1,192 +1,234 @@
-\# ConnectX — Reliable Real-Time Chat Application
+# ConnectX — Real-Time Messaging Application
 
+## Project Overview
 
+ConnectX is a real-time messaging application built using Java 21 and Spring Boot.
 
-ConnectX is a real-time chat application built with Java 21 and Spring Boot.
+The application enables users to register, authenticate securely, communicate through one-to-one conversations, and receive messages in real time.
 
+It uses REST APIs for conventional operations and WebSocket with STOMP for real-time communication.
 
+The project follows a layered monolithic architecture with MySQL database persistence.
 
-The project focuses on reliable messaging, secure authentication, database persistence, and backend engineering best practices.
+## Features
 
+* User registration and login.
+* JWT-based authentication.
+* Password encryption using BCrypt.
+* Spring Security authorization.
+* User listing.
+* One-to-one messaging.
+* Real-time message delivery using WebSocket and STOMP.
+* Persistent message storage using MySQL.
+* Conversation history.
+* Paginated message retrieval.
+* Load older messages without losing scroll position.
+* Unread message counts.
+* Message read-status tracking.
+* Global exception handling.
+* Automated backend tests.
 
+## Technology Stack
 
-\## Project Goals
+### Backend
 
+* Java 21
+* Spring Boot
+* Spring Web
+* Spring Security
+* Spring WebSocket
+* STOMP
+* Spring Data JPA
+* Hibernate
+* JWT
+* Bean Validation
+* Maven
 
+### Database
 
-\* Implement user registration and authentication.
+* MySQL 8
+* SQL
 
-\* Secure endpoints using Spring Security and JWT.
+### Frontend
 
-\* Create private chatrooms and manage room membership.
+* HTML5
+* CSS3
+* JavaScript
 
-\* Exchange messages in real time using WebSocket and STOMP.
+### Testing
 
-\* Persist messages in MySQL.
+* JUnit
+* Mockito
+* Spring Boot Test
+* MockMvc
 
-\* Retrieve message history with pagination.
+### Development Tools
 
-\* Recover missed messages after reconnection.
+* IntelliJ IDEA
+* Visual Studio Code
+* Git
+* GitHub
+* MySQL Workbench
+* Postman
 
-\* Prevent duplicate messages using idempotency.
+## System Architecture
 
-\* Track message delivery and read status.
+ConnectX follows a layered monolithic architecture.
 
-\* Write automated tests for APIs, business logic, and reliability features.
+The backend is organized into the following layers:
 
+1. Controller Layer — Handles incoming HTTP requests.
+2. Service Layer — Contains business logic.
+3. Repository Layer — Handles database operations.
+4. Entity Layer — Represents database entities.
+5. DTO Layer — Transfers data between application layers.
+6. Configuration Layer — Manages security and application configuration.
 
+### Communication Architecture
 
-\## Technology Stack
+**REST API**
 
+* Registration and authentication.
+* User management.
+* Message history.
+* Conversation retrieval.
+* Unread counts and read-status updates.
 
+**WebSocket with STOMP**
 
-\### Backend
+* Real-time message delivery.
+* Live communication between connected users.
 
+**Database**
 
+* MySQL stores user and message information.
 
-\* Java 21
+## Authentication and Security
 
-\* Spring Boot
+ConnectX uses:
 
-\* Spring Web
+* Spring Security for endpoint protection.
+* JWT for stateless authentication.
+* BCrypt for password hashing.
+* Authentication filters for JWT validation.
+* Authorization checks for protected messaging operations.
 
-\* Spring WebSocket
+## Message Pagination
 
-\* STOMP
+Conversation history supports pagination.
 
-\* Spring Security
+* Default page size: 30 messages.
+* Older messages can be loaded on demand.
+* Messages are ordered using creation time and ID.
+* Scroll position is preserved when older messages are loaded.
 
-\* JWT
+## Project Setup
 
-\* Spring Data JPA
+### Prerequisites
 
-\* Hibernate
+Install:
 
-\* Maven
+* Java 21
+* MySQL 8
+* Git
 
-\* Bean Validation
+### 1. Clone the Repository
 
+```bash
+git clone <your-github-repository-url>
+cd connectX
+```
 
+### 2. Create the Database
 
-\### Database
+```sql
+CREATE DATABASE connectx;
+```
 
+Configure your MySQL database credentials.
 
+### 3. Configure Environment Variables
 
-\* MySQL
+Set the following environment variables:
 
-\* SQL
+```text
+DB_PASSWORD=your_mysql_password
+JWT_SECRET=your_secure_jwt_secret
+```
 
+Never commit actual passwords or JWT secrets to GitHub.
 
+### 4. Run the Application
 
-\### Frontend
+On Windows:
 
+```powershell
+.\mvnw.cmd spring-boot:run
+```
 
+On Linux/macOS:
 
-\* HTML
+```bash
+./mvnw spring-boot:run
+```
 
-\* CSS
+### 5. Open the Application
 
-\* JavaScript
+```text
+http://localhost:8080/
+```
 
+## Running Tests
 
+Run the complete automated test suite:
 
-\### Testing
+Windows:
 
+```powershell
+.\mvnw.cmd clean test
+```
 
+Linux/macOS:
 
-\* JUnit
+```bash
+./mvnw clean test
+```
 
-\* Mockito
+## Development Status
 
-\* Spring Boot Test
+**Core application implementation completed.**
 
-\* Postman
+Implemented modules include authentication, authorization, user management, one-to-one messaging, real-time communication, message persistence, pagination, unread tracking, and exception handling.
 
+Core messaging functionality has been manually verified using two user accounts.
 
+Automated backend tests have passed in the development environment.
 
-\### Development Tools
+Final documentation and project preparation are ongoing.
 
+## Future Enhancements
 
+Possible future extensions include:
 
-\* IntelliJ IDEA
+* Group messaging.
+* File and image sharing.
+* Message delivery receipts.
+* Typing indicators.
+* Push notifications.
+* Deployment to a cloud platform.
 
-\* Git
+These are future enhancements, not currently claimed as implemented.
 
-\* GitHub
+## Learning Objectives
 
-\* MySQL Workbench
+This project demonstrates practical experience with:
 
-\* VS Code
-
-
-
-\## Architecture
-
-
-
-The application will initially use a modular Spring Boot monolith.
-
-
-
-The backend will separate controllers, services, repositories, entities, DTOs, and configuration.
-
-
-
-REST APIs will handle conventional operations such as authentication and message history retrieval. WebSocket with STOMP will support real-time messaging.
-
-
-
-MySQL will store users, chatrooms, memberships, and messages.
-
-
-
-Microservices will be considered only after the initial application is implemented and tested.
-
-
-
-\## Development Status
-
-
-
-\*\*Current phase:\*\* Project planning and repository setup.
-
-
-
-The application features listed above are planned. They are not yet implemented.
-
-
-
-\## Planned Development Phases
-
-
-
-1\. Project planning and GitHub setup
-
-2\. Spring Boot project setup
-
-3\. Database design and JPA
-
-4\. User authentication
-
-5\. Chatroom functionality
-
-6\. Real-time messaging
-
-7\. Message persistence and reliability
-
-8\. Automated testing
-
-9\. Microservices migration
-
-10\. Documentation and deployment
-
-
-
-\## Learning Objectives
-
-
-
-This project is intended to develop practical skills in Java, Spring Boot, REST API development, SQL, authentication, WebSocket messaging, testing, Git, and software architecture.
-
-
-
+* Java backend development.
+* Spring Boot application development.
+* REST API design.
+* Spring Security and JWT authentication.
+* Relational database management.
+* WebSocket communication.
+* Layered monolithic architecture.
+* Automated testing.
+* Git version control.
